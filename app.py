@@ -1,22 +1,19 @@
 import streamlit as st
-import base64
 import streamlit.components.v1 as components
+import base64
 
-st.title("🎙️ Voice Recorder (Fully Streamlit‑Compatible)")
+st.title("🎙️ Voice Recorder (Stable & Streamlit‑Cloud Compatible)")
 
-# Component wrapper
-def audio_recorder():
-    component_value = components.html(
+# --- Component wrapper ---
+def voice_recorder():
+    value = components.html(
         """
+        <div>
+            <button id="startBtn">Start Recording</button>
+            <button id="stopBtn">Stop Recording</button>
+        </div>
+
         <script>
-        const startBtn = document.createElement("button");
-        startBtn.innerText = "Start Recording";
-        const stopBtn = document.createElement("button");
-        stopBtn.innerText = "Stop Recording";
-
-        document.body.appendChild(startBtn);
-        document.body.appendChild(stopBtn);
-
         let recorder;
         let chunks = [];
 
@@ -41,18 +38,20 @@ def audio_recorder():
             recorder.stop();
         }
 
-        startBtn.onclick = startRecording;
-        stopBtn.onclick = stopRecording;
+        document.getElementById("startBtn").onclick = startRecording;
+        document.getElementById("stopBtn").onclick = stopRecording;
         </script>
         """,
         height=200,
     )
-    return component_value
+    return value
 
 
-audio_data = audio_recorder()
+# --- Get audio from component ---
+audio_base64 = voice_recorder()
 
-if audio_data:
-    audio_bytes = base64.b64decode(audio_data)
+# --- If audio exists, decode and display ---
+if isinstance(audio_base64, str) and len(audio_base64) > 0:
+    audio_bytes = base64.b64decode(audio_base64)
     st.audio(audio_bytes, format="audio/webm")
     st.download_button("Download Recording", audio_bytes, "recording.webm")
