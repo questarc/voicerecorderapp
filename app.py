@@ -2,19 +2,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 import base64
 
-st.title("🎙️ Reliable Voice Recorder")
+st.title("🎙️ Voice Recorder (Streamlit Cloud Compatible)")
 
-# Create a real Streamlit component
-record_audio = components.declare_component(
-    "record_audio",
-    path=""
-)
-
-# Render the component
-audio_base64 = record_audio(
-    default="",
-    key="audio_recorder",
-    html="""
+# Render the recorder UI + JS
+audio_base64 = components.html(
+    """
     <div style="font-family: sans-serif;">
         <button id="startBtn">🎤 Start Recording</button>
         <button id="stopBtn" disabled>⏹ Stop Recording</button>
@@ -64,10 +56,12 @@ audio_base64 = record_audio(
         status.innerText = "Status: Stopped";
     };
     </script>
-    """
+    """,
+    height=250,
+    key="recorder"
 )
 
-# If audio is returned, show it
+# If audio returned, decode + show
 if isinstance(audio_base64, str) and audio_base64.strip():
     audio_bytes = base64.b64decode(audio_base64)
     st.success("Recording complete!")
