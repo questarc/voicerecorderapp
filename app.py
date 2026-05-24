@@ -2,70 +2,72 @@ import streamlit as st
 import streamlit.components.v1 as components
 import base64
 
-st.title("🎙️ Voice Recorder (Reliable Streamlit Component)")
+st.title("🎙️ Reliable Voice Recorder")
 
-# --- Component wrapper ---
-def recorder_component():
-    return components.html(
-        """
-        <div style="font-family: sans-serif;">
-            <button id="startBtn">🎤 Start Recording</button>
-            <button id="stopBtn" disabled>⏹ Stop Recording</button>
-            <p id="status">Status: Idle</p>
-        </div>
+# Create a real Streamlit component
+record_audio = components.declare_component(
+    "record_audio",
+    path=""
+)
 
-        <script>
-        let recorder;
-        let chunks = [];
+# Render the component
+audio_base64 = record_audio(
+    default="",
+    key="audio_recorder",
+    html="""
+    <div style="font-family: sans-serif;">
+        <button id="startBtn">🎤 Start Recording</button>
+        <button id="stopBtn" disabled>⏹ Stop Recording</button>
+        <p id="status">Status: Idle</p>
+    </div>
 
-        const startBtn = document.getElementById("startBtn");
-        const stopBtn = document.getElementById("stopBtn");
-        const status = document.getElementById("status");
+    <script>
+    let recorder;
+    let chunks = [];
 
-        startBtn.onclick = async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            recorder = new MediaRecorder(stream);
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const status = document.getElementById("status");
 
-            chunks = [];
-            recorder.ondataavailable = e => chunks.push(e.data);
+    startBtn.onclick = async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recorder = new MediaRecorder(stream);
 
-            recorder.onstart = () => {
-                status.innerText = "Status: Recording...";
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-            };
+        chunks = [];
+        recorder.ondataavailable = e => chunks.push(e.data);
 
-            recorder.onstop = () => {
-                status.innerText = "Status: Processing...";
-                const blob = new Blob(chunks, { type: "audio/webm" });
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    const base64data = reader.result.split(",")[1];
-                    Streamlit.setComponentValue(base64data);
-                };
-                reader.readAsDataURL(blob);
-
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-            };
-
-            recorder.start();
+        recorder.onstart = () => {
+            status.innerText = "Status: Recording...";
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
         };
 
-        stopBtn.onclick = () => {
-            recorder.stop();
-            status.innerText = "Status: Stopped";
+        recorder.onstop = () => {
+            status.innerText = "Status: Processing...";
+            const blob = new Blob(chunks, { type: "audio/webm" });
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64data = reader.result.split(",")[1];
+                Streamlit.setComponentValue(base64data);
+            };
+            reader.readAsDataURL(blob);
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
         };
-        </script>
-        """,
-        height=250,
-    )
 
+        recorder.start();
+    };
 
-# --- Get audio from component ---
-audio_base64 = recorder_component()
+    stopBtn.onclick = () => {
+        recorder.stop();
+        status.innerText = "Status: Stopped";
+    };
+    </script>
+    """
+)
 
-# --- If audio exists, decode and display ---
+# If audio is returned, show it
 if isinstance(audio_base64, str) and audio_base64.strip():
     audio_bytes = base64.b64decode(audio_base64)
     st.success("Recording complete!")
