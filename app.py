@@ -1,11 +1,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
-import base64
 
-st.title("🎙️ Voice Recorder (Streamlit Cloud Compatible)")
+st.title("🎙️ Voice Recorder (no backend wiring yet)")
 
-# Render the recorder UI + JS
-audio_base64 = components.html(
+components.html(
     """
     <div style="font-family: sans-serif;">
         <button id="startBtn">🎤 Start Recording</button>
@@ -35,17 +33,8 @@ audio_base64 = components.html(
         };
 
         recorder.onstop = () => {
-            status.innerText = "Status: Processing...";
-            const blob = new Blob(chunks, { type: "audio/webm" });
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64data = reader.result.split(",")[1];
-                Streamlit.setComponentValue(base64data);
-            };
-            reader.readAsDataURL(blob);
-
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
+            status.innerText = "Status: Stopped";
+            // On this Streamlit setup we can't send data back to Python reliably.
         };
 
         recorder.start();
@@ -53,17 +42,8 @@ audio_base64 = components.html(
 
     stopBtn.onclick = () => {
         recorder.stop();
-        status.innerText = "Status: Stopped";
     };
     </script>
     """,
     height=250,
-    key="recorder"
 )
-
-# If audio returned, decode + show
-if isinstance(audio_base64, str) and audio_base64.strip():
-    audio_bytes = base64.b64decode(audio_base64)
-    st.success("Recording complete!")
-    st.audio(audio_bytes, format="audio/webm")
-    st.download_button("Download Recording", audio_bytes, "recording.webm")
